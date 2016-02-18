@@ -73,6 +73,26 @@ window.onload = function() {
             //Shadow Animations
             shadow.animations.add('flicker', [0,1,2], 1, true);
         
+        
+        
+        //Mask setup; from Mask example.
+        //	A mask is a Graphics object
+        light = game.add.graphics(0,0);
+
+        //	Shapes drawn to the Graphics object must be filled.
+        light.beginFill(0x111111);
+
+        //	Here we'll draw a circle
+        light.drawCircle(100, 100, 100);
+
+        //	And apply it to the Sprite
+        background.mask = light;
+        //player.mask = light;
+        shadow.mask = light;
+        
+        light.x = player.x - 150;
+        light.y = player.y - 150;
+        
     
             
 
@@ -90,7 +110,12 @@ window.onload = function() {
         //Shadow updates
             //Move towards player, with great menace!
             shadowWalk();
-            }
+            
+    
+        //Light updates
+            lightUpdate();
+        
+    }
     
     
     function playerWalk(){
@@ -189,6 +214,12 @@ window.onload = function() {
             game.physics.arcade.moveToObject(shadow,player,75);
         }
           
+    }
+    
+    function lightUpdate(){
+        light.x = player.x;
+        light.y = player.y;
+        
     }
     
 };
