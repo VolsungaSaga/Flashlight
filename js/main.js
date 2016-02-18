@@ -33,7 +33,10 @@ window.onload = function() {
     var music;      //Who invited Kevin MacLeod?
     
     var light;      //A shape that cuts out a part of the mask.
+    var lightOn = true;
+    
     var cursors;
+    var lightButton;
     
     function create() {
         
@@ -48,6 +51,10 @@ window.onload = function() {
         //Physics Setup
         game.physics.startSystem(Phaser.Physics.ARCADE);
         
+        //Controls Setup
+        cursors = game.input.keyboard.createCursorKeys();
+        lightButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
         
         //Player setup
         player = game.add.sprite(game.width/2 - 32 ,380, 'link');
@@ -56,6 +63,7 @@ window.onload = function() {
         
         game.physics.enable(player,Phaser.Physics.ARCADE);
         player.body.collideWorldBounds = true;
+
 
         
             //Player Animations
@@ -71,7 +79,7 @@ window.onload = function() {
         shadow.body.collideWorldBounds = true;
             
             //Shadow Animations
-            shadow.animations.add('flicker', [0,1,2], 1, true);
+            shadow.animations.add('flicker', [0,1,2,1,0], 1, true);
         
         
         
@@ -80,20 +88,29 @@ window.onload = function() {
         light = game.add.graphics(0,0);
 
         //	Shapes drawn to the Graphics object must be filled.
-        light.beginFill(0x111111);
+        light.beginFill(0x111111, 50);
 
         //	Here we'll draw a circle
         light.drawCircle(100, 100, 100);
 
         //	And apply it to the Sprite
         background.mask = light;
-        //player.mask = light;
+        player.mask = light;
         shadow.mask = light;
         
-        light.x = player.x - 150;
-        light.y = player.y - 150;
+        light.x = player.x - 100;
+        light.y = player.y - 100;
         
-    
+        
+        //Sfx!
+        creepyBreath = game.add.audio('creepyBreath');
+        
+        //Music!
+        music = game.add.audio('music');
+        
+        
+        //Start music!
+        music.play();
             
 
 
@@ -119,7 +136,6 @@ window.onload = function() {
     
     
     function playerWalk(){
-        cursors = game.input.keyboard.createCursorKeys();
 
         var PLAYERSPEED = 65;
         
@@ -210,6 +226,7 @@ window.onload = function() {
         shadow.body.velocity.x = 0;
         shadow.body.velocity.y = 0;
         var shadowToPlayerDist = game.math.distance(shadow.x,shadow.y, player.x, player.y);
+        
         if(shadowToPlayerDist <= 200){
             game.physics.arcade.moveToObject(shadow,player,75);
         }
@@ -217,8 +234,21 @@ window.onload = function() {
     }
     
     function lightUpdate(){
-        light.x = player.x;
-        light.y = player.y;
+        if(lightOn){
+        light.x = player.x - 84;
+        light.y = player.y - 84;
+        }
+        if(lightButton.isDown){
+            if(lightOn){
+                //Banished forthwith from kingdom of Rohan!
+                light.x = 1500;
+                light.y = 1500;
+                lightOn = false;
+            }
+            else{
+                lightOn = true;
+            }
+        }
         
     }
     
