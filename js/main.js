@@ -13,40 +13,182 @@ window.onload = function() {
     
     "use strict";
     
-    var game = new Phaser.Game( 800, 600, Phaser.AUTO, 'game', { preload: preload, create: create, update: update } );
+    var game = new Phaser.Game( 1376, 450, Phaser.AUTO, 'game', { preload: preload, create: create, update: update } );
     
     function preload() {
         // Load an image and call it 'logo'.
-        game.load.image( 'logo', 'assets/phaser.png' );
+        game.load.image( 'house', 'assets/sprites/houseBackground.png' );
+        game.load.spritesheet('shadow','assets/sprites/shadowSpriteSheet81x81.png', 81,81);
+        game.load.spritesheet('link', 'assets/sprites/linkSpriteSheet32x32.png',32,32);
+        
+        game.load.audio('creepyBreath',"assets/sfx/creepyBreath.wav");
+        game.load.audio('music','assets/music/Aftermath.mp3');
     }
     
-    var bouncy;
+    var player; //The kid.
+    var facing = 'down'; //Which way is he facing?
+    var shadow; //The darkness.
+    var background; //The house.
+    var creepyBreath; //Who is that?
+    var music;      //Who invited Kevin MacLeod?
+    
+    var light;      //A shape that cuts out a part of the mask.
+    var cursors;
     
     function create() {
-        // Create a sprite at the center of the screen using the 'logo' image.
-        bouncy = game.add.sprite( game.world.centerX, game.world.centerY, 'logo' );
-        // Anchor the sprite at its center, as opposed to its top-left corner.
-        // so it will be truly centered.
-        bouncy.anchor.setTo( 0.5, 0.5 );
         
-        // Turn on the arcade physics engine for this sprite.
-        game.physics.enable( bouncy, Phaser.Physics.ARCADE );
-        // Make it bounce off of the world bounds.
-        bouncy.body.collideWorldBounds = true;
+        //Background Setup
+        background = game.add.sprite(0,0,'house');
+        game.stage.backgroundColor = '#000000';
         
-        // Add some text using a CSS style.
-        // Center it in X, and position its top 15 pixels from the top of the world.
-        var style = { font: "25px Verdana", fill: "#9999ff", align: "center" };
-        var text = game.add.text( game.world.centerX, 15, "Build something awesome.", style );
-        text.anchor.setTo( 0.5, 0.0 );
+        background.height = game.height;
+        background.width = game.width;
+        
+        
+        //Physics Setup
+        game.physics.startSystem(Phaser.Physics.ARCADE);
+        
+        
+        //Player setup
+        player = game.add.sprite(game.width/2 - 32 ,380, 'link');
+        player.height = 42;
+        player.width = 42;
+        
+        game.physics.enable(player,Phaser.Physics.ARCADE);
+        player.body.collideWorldBounds = true;
+
+        
+            //Player Animations
+            player.animations.add('left', [18,19,20,21,22,23,24,25,26], 6, true);
+            player.animations.add('right', [27,28,29,30,31,32,33,34,35], 6, true);
+            player.animations.add('up', [36,37,38,39,40,41,42,43],6, true);
+            player.animations.add('down', [9,10,11,12,13,14,15,16], 6, true);
+        
+        
+        //Shadow setup
+        shadow = game.add.sprite(50, game.height/2, 'shadow');
+        game.physics.enable(shadow,Phaser.Physics.ARCADE);
+        shadow.body.collideWorldBounds = true;
+            
+            //Shadow Animations
+            shadow.animations.add('flicker', [0,1,2], 1, true);
+        
+    
+            
+
+
+        
     }
     
     function update() {
-        // Accelerate the 'logo' sprite towards the cursor,
-        // accelerating at 500 pixels/second and moving no faster than 500 pixels/second
-        // in X or Y.
-        // This function returns the rotation angle that makes it visually match its
-        // new trajectory.
-        bouncy.rotation = game.physics.arcade.accelerateToPointer( bouncy, this.game.input.activePointer, 500, 500, 500 );
+        
+        //Player update()
+            //Walking
+            playerWalk();
+    
+        
+        //Shadow updates
+            //Move towards player, with great menace!
+            shadowWalk();
+            }
+    
+    
+    function playerWalk(){
+        cursors = game.input.keyboard.createCursorKeys();
+
+        var PLAYERSPEED = 65;
+        
+        player.body.velocity.x = 0;
+        player.body.velocity.y = 0;
+        
+        //Code borrowed from StarStruck example.
+        if (cursors.left.isDown)
+        {
+        player.body.velocity.x = -1*PLAYERSPEED;
+
+            if (facing != 'left')
+                {
+                player.animations.play('left');
+                facing = 'left';
+                }
+        }
+        else if (cursors.right.isDown)
+        {
+        player.body.velocity.x = PLAYERSPEED;
+
+            if (facing != 'right')
+            {
+                player.animations.play('right');
+                facing = 'right';
+            }
+        }
+        
+        else if (cursors.up.isDown){
+            
+            player.body.velocity.y = -1*PLAYERSPEED;
+            
+            if(facing != 'up'){
+                player.animations.play('up');
+                facing = 'up';
+            }
+        }
+        
+        else if(cursors.down.isDown){
+            
+            player.body.velocity.y = PLAYERSPEED;
+            
+            if(facing != 'down'){
+                player.animations.play('down');
+                facing = 'down';
+                
+            }
+        }
+    else
+    {
+        if (facing != 'idle')
+        {
+            player.animations.stop();
+
+            if (facing == 'left')
+            {
+                player.frame = 1;
+            }
+            else if(facing == 'right')
+            {
+                player.frame = 2;
+            }
+            
+            else if(facing == 'up'){
+                
+                player.frame = 3;
+            }
+            
+            else if(facing == 'down'){
+                
+                player.frame = 0;
+            }
+
+            facing = 'idle';
+        }
     }
+        
+    }
+        
+    
+    function shadowWalk(){
+        //Move slowly towards player if player within certain distance, unless it has a light shown on it.
+        
+            //Always play the flicker animation.
+        shadow.animations.play('flicker');
+
+        
+        shadow.body.velocity.x = 0;
+        shadow.body.velocity.y = 0;
+        var shadowToPlayerDist = game.math.distance(shadow.x,shadow.y, player.x, player.y);
+        if(shadowToPlayerDist <= 200){
+            game.physics.arcade.moveToObject(shadow,player,75);
+        }
+          
+    }
+    
 };
