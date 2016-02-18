@@ -13,7 +13,7 @@ window.onload = function() {
     
     "use strict";
     
-    var game = new Phaser.Game( 1376, 450, Phaser.AUTO, 'game', { preload: preload, create: create, update: update } );
+    var game = new Phaser.Game( 1376, 450, Phaser.AUTO, 'game', { preload: preload, create: create, update: update, render:render } );
     
     function preload() {
         // Load an image and call it 'logo'.
@@ -34,6 +34,9 @@ window.onload = function() {
     
     var light;      //A shape that cuts out a part of the mask.
     var lightOn = true;
+    //Timers
+    var lightTimer;
+    var breathTimer;
     
     var cursors;
     var lightButton;
@@ -112,6 +115,13 @@ window.onload = function() {
         //Start music!
         music.play();
             
+        //Timer setup
+        lightTimer = game.time.events.add(Phaser.Timer.SECOND * 40, gameOver, lightUpdate);
+        breathTimer = game.time.events.add(Phaser.Timer.SECOND* 11, shadowBreathe, update);
+        
+        
+        
+        
 
 
         
@@ -226,17 +236,29 @@ window.onload = function() {
         shadow.body.velocity.x = 0;
         shadow.body.velocity.y = 0;
         var shadowToPlayerDist = game.math.distance(shadow.x,shadow.y, player.x, player.y);
+                    
+        game.physics.arcade.moveToObject(shadow,player,60);
         
-        if(shadowToPlayerDist <= 200){
-            game.physics.arcade.moveToObject(shadow,player,75);
-        }
+        
           
+    }
+    
+    
+    function shadowBreathe(){
+        
+        if(!creepyBreath.isPlaying){
+            var shadowToPlayerDist = game.math.distance(shadow.x,shadow.y, player.x, player.y);
+            if(shadowToPlayerDist < 1000){
+                creepyBreath.volume = 1 - 0.001*shadowToPlayerDist;
+                creepyBreath.play();
+            }
+        }
     }
     
     function lightUpdate(){
         if(lightOn){
-        light.x = player.x - 84;
-        light.y = player.y - 84;
+            light.x = player.x - 84;
+            light.y = player.y - 84;
         }
         if(lightButton.isDown){
             if(lightOn){
@@ -244,12 +266,39 @@ window.onload = function() {
                 light.x = 1500;
                 light.y = 1500;
                 lightOn = false;
+                game.time.events.pause();
             }
             else{
                 lightOn = true;
+                game.time.events.resume();
             }
         }
         
     }
+    
+    
+    function gameOver(){
+        //Banish light
+        light.x = 1500;
+        light.y = 1500;
+        //Pause game
+        game.paused = true;
+        
+        //Place text describing your fate.
+        var gameOverText = game.add.text(game.width/2 - 150, game.height-150, 'You\'ve run out of battery. \n The darkness has devoured you.', { font: '30px Arial', fill: '#fff' });
+
+        
+        
+    }
+
+    
+    function render(){
+        game.debug.text("Battery Life: " + game.time.events.duration, 32, 32);
+        
+        
+    }
+    
+    
+    
     
 };
